@@ -21,11 +21,11 @@ def tuning_parameters(
 
     with tf.Session() as sess:
         data = mergeData(
-            path,
-            num_classes,
-            batch_size,
-            train_ratio,
-            val_ratio,
+            path = data_path,
+            num_classes = num_classes,
+            batch_size = batch_size,
+            train_ratio = train_ratio,
+            val_ratio = val_ratio,
             useless_columns = ["stock_code", "time", "time_rank", "fin_rank", "news_rank"],
             target_news = "sentiment",
             target_fin = "st",
