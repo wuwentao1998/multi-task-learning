@@ -1,6 +1,7 @@
 import tensorflow as tf
 import argparse
 from model import multiTaskModel
+from data import mergeData
 
 def tuning_parameters(
         data_path,
