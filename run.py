@@ -27,10 +27,10 @@ def tuning_parameters(
             batch_size = batch_size,
             train_ratio = train_ratio,
             val_ratio = val_ratio,
+            display_step=100,
             useless_columns = ["stock_code", "time", "time_rank", "fin_rank", "news_rank"],
             target_news = "sentiment",
-            target_fin = "st",
-            display_step = 100
+            target_fin = "st"
         )
 
         input_dimenion = data.input_dimension
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--dropout_ratio", help="dropout ratio", required=False, default=0.0, type=float)
     parser.add_argument("--train_ratio", help="training ratio", required=False, default=0.7, type=float)
     parser.add_argument("--val_ratio", help="validation ratio", required=False, default=0.15, type=float)
-    parser.add_argument("--data_path", help="data path", required=False, default="data/fin_news/merge_fin_news_new.pkl", type=str)
+    parser.add_argument("--data_path", help="data path", required=False, default="../data/fin_news/merge_fin_news_new.pkl", type=str)
     parser.add_argument("--dense_units", help="dense_units", required=False, default=128, type=int)
     parser.add_argument("--lstm_units", help="number of lstm units", required=False, default=64, type=int)
     parser.add_argument("--lstm_num_layers", help="number of lstm layers", required=False, default=1, type=int)
@@ -82,5 +82,5 @@ if __name__ == "__main__":
         val_ratio=args.val_ratio,
         dense_units=args.dense_units,
         lstm_units=args.lstm_units,
-        lstm_num_layers=args.lstm_num_layers,
+        lstm_num_layers=args.lstm_num_layers
     )

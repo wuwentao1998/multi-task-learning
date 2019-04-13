@@ -1,7 +1,7 @@
 import math
 
 class multiTaskModel(object):
-    def __int__(
+    def __init__(
             self,
             sess,
             max_steps,
@@ -14,11 +14,11 @@ class multiTaskModel(object):
             dropout_ratio,
             dense_units,
             lstm_units,
-            lstm_num_layers
-    ):
+            lstm_num_layers):
+
         self.sess = sess
         self.max_steps = max_steps
-        self.input_dimenion = input_dimenion
+        self.input_dimenion = input_dimenion # 数据的维度
         self.learning_rate = learning_rate
         self.num_classes = num_classes
         self.max_epochs = max_epochs
@@ -53,7 +53,7 @@ class multiTaskModel(object):
         outputs = tf.stack(outputs) # [n_steps,batch,n_hidden]
         outputs = tf.transpose(outputs, [1, 0, 2]) # [batch,n_steps,n_hidden]
 
-        index = tf.range(0, tf.shape(outputs)[0]) * self.max_num_steps + (self.seq_lens - 1)
+        index = tf.range(0, tf.shape(outputs)[0]) * self.max_steps + (self.seq_lens - 1)
 
         # get last step hidden state
         last = tf.gather(tf.reshape(outputs, [-1, self.lstm_units]), index)

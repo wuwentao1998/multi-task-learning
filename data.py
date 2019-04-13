@@ -7,25 +7,26 @@ import argparse
 
 
 class mergeData(object):
-    def __int__(self,
-                path,
-                num_classes,
-                batch_size,
-                train_ratio,
-                val_ratio,
-                useless_columns,
-                target_news,
-                target_fin,
-                display_step
-                ):
+    def __init__(
+            self,
+            path,
+            num_classes,
+            batch_size,
+            train_ratio,
+            val_ratio,
+            useless_columns,
+            display_step,
+            target_news,
+            target_fin):
+
         self.path = path
         self.num_classes = num_classes
         self.batch_size = batch_size
         self.train_ratio = train_ratio
         self.val_ratio = val_ratio
         self.useless_columns = useless_columns
-        self.targe_news = target_news
-        self.targe_fin = target_fin
+        self.target_news = target_news
+        self.target_fin = target_fin
         self.display_step = display_step
 
         self.data = self._load_data()
@@ -52,7 +53,7 @@ class mergeData(object):
     def _calulate_input_dimension(self):
         # remove "stock_code", "time", "time_rank" and "st"
         num_columns = len(list(self.data.columns))
-        return num_columns - len(self.useless_columns) - 1
+        return num_columns - len(self.useless_columns) # TODO：为什么一开始我要减一
 
 
     def _pre_compute(self):
@@ -61,7 +62,8 @@ class mergeData(object):
         column_list = list(self.data.columns)
         column_x_list = column_list.copy()
         useless_columns_plus = self.useless_columns.copy()
-        useless_columns_plus.append(self.target_column)
+        useless_columns_plus.append(self.target_news)
+        useless_columns_plus.append(self.target_fin)
         for column_i in useless_columns_plus:  # ["stock_code", "time", "time_rank", "st"， "fin_rank", "news_rank"]:
             if column_i in column_x_list:
                 column_x_list.remove(column_i)
@@ -79,16 +81,16 @@ class mergeData(object):
         max_time_rank = self.data["time_rank"].max()
 
         temp = 0
-        for stock_code_i in stock_code_list
-            for rank_num in range(min_time_rank, max_time_rank)
+        for stock_code_i in stock_code_list:
+            for rank_num in range(min_time_rank, max_time_rank + 1):
                 if self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)].shape[0] == 0:
                     continue
 
                 rank_i = self.data[(self.data["stock_code"] == stock_code_i) & (
                         self.data["time_rank"] == rank_num)]["fin_rank"].tolist()[0]
 
-                pre_compute_x[temp, :rank_num - 1, :] = self.data[(self.data["stock_code"] == stock_code_i) &
-                                                                  (self.data["time_rank"] < rank_num)].as_matrix(column_x_list)
+                pre_compute_x[temp, :rank_i - 1, :] = self.data[(self.data["stock_code"] == stock_code_i) &
+                                                                  (self.data["time_rank"] <= rank_num)].as_matrix(column_x_list) # time_rank变动
                 label_i = self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["st"].tolist()[0]
 
                 seq_lens[temp] = rank_i - 1
@@ -113,7 +115,7 @@ class mergeData(object):
 
     def _load_pre_compute(self):
         pre_compute_dir = "../data/pre_compute/"
-        filename = self.filename_prefix + "_data.npy"
+        filename = "data.npy"
         pre_compute_path = os.path.join(pre_compute_dir, filename)
 
         if not os.path.exists(pre_compute_dir):
@@ -137,6 +139,7 @@ class mergeData(object):
         self.test_index = [index_i for index_i in val_test_index if index_i not in self.val_index]
         self.pos_case_index = [index_i for index_i in self.train_index if
                                index_i in np.where(self.pre_compute_data["y"] == [0, 1])[0]]
+
 
     def _generate_batch(self, index):
         index_size = len(index)
