@@ -6,7 +6,7 @@ from data import mergeData
 def tuning_parameters(
         data_path,
         learning_rate=0.001,
-        num_classes=4,
+        num_classes=2, #暂时没有sentiment字段，所以是2不是4
         max_epochs=10,
         display_step=100,
         batch_size=128,
@@ -15,7 +15,8 @@ def tuning_parameters(
         val_ratio=0.15,
         dense_units=128,
         lstm_units=64,
-        lstm_num_layers=1
+        lstm_num_layers=1,
+        pos_weight=1.0
                       ):
 
     tf.reset_default_graph()
@@ -28,7 +29,7 @@ def tuning_parameters(
             train_ratio = train_ratio,
             val_ratio = val_ratio,
             display_step=100,
-            useless_columns = ["stock_code", "time", "time_rank", "fin_rank", "news_rank"],
+            useless_columns = ["stock_code", "time", "time_rank", "fin_rank", "news_rank", "time_rank_x", "time_rank_y"],
             target_news = "sentiment",
             target_fin = "st"
         )
@@ -47,7 +48,8 @@ def tuning_parameters(
             dropout_ratio=dropout_ratio,
             dense_units=dense_units,
             lstm_units = lstm_units,
-            lstm_num_layers = lstm_num_layers
+            lstm_num_layers = lstm_num_layers,
+            pos_weight = pos_weight
         )
 
         test_pred, test_y, test_loss, test_acc = multi_task_model.train(data)
@@ -56,7 +58,7 @@ def tuning_parameters(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--learning_rate", help="learning rate", required=False, default=0.001, type=float)
-    parser.add_argument("--num_classes", help="number of classes", required=False, default=4, type=int)
+    parser.add_argument("--num_classes", help="number of classes", required=False, default=2, type=int) # TODO 应该是4
     parser.add_argument("--max_epochs", help="max epochs", required=False, default=10, type=int)
     parser.add_argument("--display_step", help="number of steps to display", required=False, default=100, type=int)
     parser.add_argument("--batch_size", help="batch size", required=False, default=64, type=int)
@@ -67,6 +69,8 @@ if __name__ == "__main__":
     parser.add_argument("--dense_units", help="dense_units", required=False, default=128, type=int)
     parser.add_argument("--lstm_units", help="number of lstm units", required=False, default=64, type=int)
     parser.add_argument("--lstm_num_layers", help="number of lstm layers", required=False, default=1, type=int)
+    parser.add_argument("--pos_weight", help="positive weights", required=False, default=1.0, type=float)
+
     args = parser.parse_args()
 
     # train and test
@@ -82,5 +86,6 @@ if __name__ == "__main__":
         val_ratio=args.val_ratio,
         dense_units=args.dense_units,
         lstm_units=args.lstm_units,
-        lstm_num_layers=args.lstm_num_layers
+        lstm_num_layers=args.lstm_num_layers,
+        pos_weight=args.pos_weight
     )

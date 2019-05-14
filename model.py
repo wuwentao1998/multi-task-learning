@@ -1,4 +1,5 @@
 import math
+import tensorflow as tf
 
 class multiTaskModel(object):
     def __init__(
@@ -14,7 +15,9 @@ class multiTaskModel(object):
             dropout_ratio,
             dense_units,
             lstm_units,
-            lstm_num_layers):
+            lstm_num_layers,
+            pos_weight
+            ):
 
         self.sess = sess
         self.max_steps = max_steps
@@ -28,12 +31,13 @@ class multiTaskModel(object):
         self.dense_units = dense_units
         self.lstm_units = lstm_units
         self.lstm_num_layers = lstm_num_layers
+        self.pos_weight = pos_weight
 
         self.inputs = None
         self.labels = None
         self.seq_lens = None
 
-        build_graph()
+        self.build_graph()
 
 
     def build_graph(self):

@@ -51,9 +51,8 @@ class mergeData(object):
 
 
     def _calulate_input_dimension(self):
-        # remove "stock_code", "time", "time_rank" and "st"
         num_columns = len(list(self.data.columns))
-        return num_columns - len(self.useless_columns) # TODO：为什么一开始我要减一
+        return num_columns - len(self.useless_columns) - 1 # 加上两个target字段，但是现在少一个字段，所以只-1
 
 
     def _pre_compute(self):
@@ -64,7 +63,7 @@ class mergeData(object):
         useless_columns_plus = self.useless_columns.copy()
         useless_columns_plus.append(self.target_news)
         useless_columns_plus.append(self.target_fin)
-        for column_i in useless_columns_plus:  # ["stock_code", "time", "time_rank", "st"， "fin_rank", "news_rank"]:
+        for column_i in useless_columns_plus:
             if column_i in column_x_list:
                 column_x_list.remove(column_i)
 
@@ -82,20 +81,30 @@ class mergeData(object):
 
         temp = 0
         for stock_code_i in stock_code_list:
-            for rank_num in range(min_time_rank, max_time_rank + 1):
+            for rank_num in range(min_time_rank + 1, max_time_rank):
                 if self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)].shape[0] == 0:
                     continue
 
                 rank_i = self.data[(self.data["stock_code"] == stock_code_i) & (
                         self.data["time_rank"] == rank_num)]["fin_rank"].tolist()[0]
 
-                pre_compute_x[temp, :rank_i - 1, :] = self.data[(self.data["stock_code"] == stock_code_i) &
-                                                                  (self.data["time_rank"] <= rank_num)].as_matrix(column_x_list) # time_rank变动
-                label_i = self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["st"].tolist()[0]
+                pre_compute_x[temp, :rank_i - 2, :] = self.data[(self.data["stock_code"] == stock_code_i) &
+                                                                  (self.data["time_rank"] < rank_num)].as_matrix(column_x_list)
+                label_st = self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["st"].tolist()[0]
+                # label_sentiment = self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["sentiment"].tolist()[0]
 
-                seq_lens[temp] = rank_i - 1
+                seq_lens[temp] = rank_i - 2
 
-                if label_i == 0:
+                # if (label_st == 0) & (label_sentiment == 0):
+                #     labels[tmep,:] = [1,0,1,0]
+                # else if (label_st == 1) & (label_sentiment == 0):
+                #     labels[temp,:] = [0,1,1,0]
+                # else if (label_st == 0) & (label_sentiment == 1):
+                #     labels[temp,:] = [1,0,0,1]
+                # else:
+                #     labels[temp,:] = [0,1,0,1]
+
+                if label_st == 0:
                     labels[temp, :] = [1, 0]
                 else:
                     labels[temp, :] = [0, 1]
@@ -114,7 +123,7 @@ class mergeData(object):
 
 
     def _load_pre_compute(self):
-        pre_compute_dir = "../data/pre_compute/"
+        pre_compute_dir = "../pre_compute/"
         filename = "data.npy"
         pre_compute_path = os.path.join(pre_compute_dir, filename)
 
@@ -137,13 +146,13 @@ class mergeData(object):
         val_test_index = [index_i for index_i in range(0, self.num_samples) if index_i not in self.train_index]
         self.val_index = random.sample(val_test_index, val_size)
         self.test_index = [index_i for index_i in val_test_index if index_i not in self.val_index]
-        self.pos_case_index = [index_i for index_i in self.train_index if
-                               index_i in np.where(self.pre_compute_data["y"] == [0, 1])[0]]
+        # self.pos_case_index = [index_i for index_i in self.train_index if
+        #                        index_i in np.where(self.pre_compute_data["y"] == [0, 1])[0]]
 
 
     def _generate_batch(self, index):
         index_size = len(index)
-        batch_x = np.zeros([index_size, self.max_num_steps, self.num_inputs])
+        batch_x = np.zeros([index_size, self.max_steps, self.input_dimension])
         label = np.zeros([index_size, self.num_classes])
         seq_lens = np.zeros([index_size], dtype=int)
 
