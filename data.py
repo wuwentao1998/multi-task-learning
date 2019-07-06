@@ -52,7 +52,7 @@ class mergeData(object):
 
     def _calulate_input_dimension(self):
         num_columns = len(list(self.data.columns))
-        return num_columns - len(self.useless_columns) - 1 # 加上两个target字段，但是现在少一个字段，所以只-1
+        return num_columns - len(self.useless_columns) - 2
 
 
     def _pre_compute(self):
@@ -80,8 +80,9 @@ class mergeData(object):
         max_time_rank = self.data["time_rank"].max()
 
         temp = 0
-        for stock_code_i in stock_code_list:
-            for rank_num in range(min_time_rank + 1, max_time_rank):
+        #for stock_code_i in stock_code_list:
+        for stock_code_i in stock_code_list[:10]:
+            for rank_num in range(min_time_rank + 1, max_time_rank + 1):
                 if self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)].shape[0] == 0:
                     continue
 
@@ -90,24 +91,20 @@ class mergeData(object):
 
                 pre_compute_x[temp, :rank_i - 2, :] = self.data[(self.data["stock_code"] == stock_code_i) &
                                                                   (self.data["time_rank"] < rank_num)].as_matrix(column_x_list)
-                label_st = self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["st"].tolist()[0]
-                # label_sentiment = self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["sentiment"].tolist()[0]
+                label_st = int(self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["st"].tolist()[0])
+                label_sentiment = int(self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)]["mood"].tolist()[0])
 
                 seq_lens[temp] = rank_i - 2
 
-                # if (label_st == 0) & (label_sentiment == 0):
-                #     labels[tmep,:] = [1,0,1,0]
-                # else if (label_st == 1) & (label_sentiment == 0):
-                #     labels[temp,:] = [0,1,1,0]
-                # else if (label_st == 0) & (label_sentiment == 1):
-                #     labels[temp,:] = [1,0,0,1]
-                # else:
-                #     labels[temp,:] = [0,1,0,1]
-
-                if label_st == 0:
-                    labels[temp, :] = [1, 0]
+                if (label_st == 0) & (label_sentiment == 0):
+                    labels[temp,:] = [1.0,0.0,1.0,0.0]
+                elif (label_st == 1) & (label_sentiment == 0):
+                    labels[temp,:] = [0.0,1.0,1.0,0.0]
+                elif (label_st == 0) & (label_sentiment == 1):
+                    labels[temp,:] = [1.0,0.0,0.0,1.0]
                 else:
-                    labels[temp, :] = [0, 1]
+                    labels[temp,:] = [0.0,1.0,0.0,1.0]
+
                 temp += 1
 
 
@@ -123,7 +120,7 @@ class mergeData(object):
 
 
     def _load_pre_compute(self):
-        pre_compute_dir = "../pre_compute/"
+        pre_compute_dir = "./pre_compute/"
         filename = "data.npy"
         pre_compute_path = os.path.join(pre_compute_dir, filename)
 
@@ -181,10 +178,10 @@ class mergeData(object):
 
     def next_batch(self):
         # time_start = time.time()
-        if self.resample_training:
-            index = self._generate_balanced_training_index()
-        else:
-            index = random.sample(self.train_index, self.batch_size)
+        # if self.resample_training:
+        #     index = self._generate_balanced_training_index()
+        # else:
+        index = random.sample(self.train_index, self.batch_size)
         index = np.array(index)
         batch_x, label, seq_lens = self._generate_batch(index)
         return batch_x, label, seq_lens

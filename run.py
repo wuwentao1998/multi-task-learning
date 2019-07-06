@@ -1,12 +1,12 @@
 import tensorflow as tf
 import argparse
-from model import multiTaskModel
 from data import mergeData
+from model import multiTaskModel
 
 def tuning_parameters(
         data_path,
         learning_rate=0.001,
-        num_classes=2, #暂时没有sentiment字段，所以是2不是4
+        num_classes=4,
         max_epochs=10,
         display_step=100,
         batch_size=128,
@@ -30,7 +30,7 @@ def tuning_parameters(
             val_ratio = val_ratio,
             display_step=100,
             useless_columns = ["stock_code", "time", "time_rank", "fin_rank", "news_rank", "time_rank_x", "time_rank_y"],
-            target_news = "sentiment",
+            target_news = "mood",
             target_fin = "st"
         )
 
@@ -58,14 +58,14 @@ def tuning_parameters(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--learning_rate", help="learning rate", required=False, default=0.001, type=float)
-    parser.add_argument("--num_classes", help="number of classes", required=False, default=2, type=int) # TODO 应该是4
+    parser.add_argument("--num_classes", help="number of classes", required=False, default=4, type=int)
     parser.add_argument("--max_epochs", help="max epochs", required=False, default=10, type=int)
     parser.add_argument("--display_step", help="number of steps to display", required=False, default=100, type=int)
     parser.add_argument("--batch_size", help="batch size", required=False, default=64, type=int)
     parser.add_argument("--dropout_ratio", help="dropout ratio", required=False, default=0.0, type=float)
     parser.add_argument("--train_ratio", help="training ratio", required=False, default=0.7, type=float)
     parser.add_argument("--val_ratio", help="validation ratio", required=False, default=0.15, type=float)
-    parser.add_argument("--data_path", help="data path", required=False, default="../data/fin_news/merge_fin_news_new.pkl", type=str)
+    parser.add_argument("--data_path", help="data path", required=False, default="./Data/merge_fin_news_try.pkl", type=str)
     parser.add_argument("--dense_units", help="dense_units", required=False, default=128, type=int)
     parser.add_argument("--lstm_units", help="number of lstm units", required=False, default=64, type=int)
     parser.add_argument("--lstm_num_layers", help="number of lstm layers", required=False, default=1, type=int)

@@ -1,5 +1,7 @@
 import math
 import tensorflow as tf
+import  numpy as np
+from sklearn.metrics import log_loss, roc_auc_score
 
 class multiTaskModel(object):
     def __init__(
@@ -65,10 +67,10 @@ class multiTaskModel(object):
         self.pred = tf.layers.dense(last, self.num_classes)
 
         self.loss = tf.reduce_mean(
-            tf.nn.weighted_cross_entropy_with_logits(
+            tf.nn.sigmoid_cross_entropy_with_logits(
             logits=self.pred,
-            targets=self.labels,
-            pos_weight=tf.constant([1.0, self.pos_weight])
+            labels=self.labels
+            #pos_weight=tf.constant([1.0, self.pos_weight])
             )
         )
 
