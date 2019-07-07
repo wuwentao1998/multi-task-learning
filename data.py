@@ -80,14 +80,18 @@ class mergeData(object):
         max_time_rank = self.data["time_rank"].max()
 
         temp = 0
+        # debug
         #for stock_code_i in stock_code_list:
-        for stock_code_i in stock_code_list[:10]:
+        for stock_code_i in stock_code_list[:15]:
             for rank_num in range(min_time_rank + 1, max_time_rank + 1):
                 if self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)].shape[0] == 0:
                     continue
 
                 rank_i = self.data[(self.data["stock_code"] == stock_code_i) & (
                         self.data["time_rank"] == rank_num)]["fin_rank"].tolist()[0]
+
+                if rank_i <= 2:
+                    continue
 
                 pre_compute_x[temp, :rank_i - 2, :] = self.data[(self.data["stock_code"] == stock_code_i) &
                                                                   (self.data["time_rank"] < rank_num)].as_matrix(column_x_list)
@@ -108,6 +112,7 @@ class mergeData(object):
                 temp += 1
 
 
+
         pre_compute_data = {
             "x" : pre_compute_x,
             "y" : labels,
@@ -115,7 +120,6 @@ class mergeData(object):
         }
 
         self.num_samples = temp
-
         return pre_compute_data
 
 
@@ -129,7 +133,13 @@ class mergeData(object):
 
         if os.path.exists(pre_compute_path):
             pre_compute_data = np.load(pre_compute_path)[()]
-            self.num_samples = len(pre_compute_data["y"])
+            #self.num_samples = len(pre_compute_data["y"])
+
+            #debug
+            i = 0
+            while pre_compute_data["seq_len"][i] != 0 :
+                i = i +1
+            self.num_samples = i
         else:
             pre_compute_data = self._pre_compute()
             np.save(pre_compute_path, pre_compute_data)

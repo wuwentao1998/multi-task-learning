@@ -2,6 +2,12 @@ import math
 import tensorflow as tf
 import  numpy as np
 from sklearn.metrics import log_loss, roc_auc_score
+import logging
+import time
+
+# configure the logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class multiTaskModel(object):
     def __init__(
@@ -35,6 +41,7 @@ class multiTaskModel(object):
         self.lstm_num_layers = lstm_num_layers
         self.pos_weight = pos_weight
 
+        self.training_flag = True
         self.inputs = None
         self.labels = None
         self.seq_lens = None
@@ -46,6 +53,7 @@ class multiTaskModel(object):
         self.inputs = tf.placeholder(tf.float32, [None, self.max_steps, self.input_dimenion], name="inputs")
         self.labels = tf.placeholder(tf.float32, [None, self.num_classes], name="labels")
         self.seq_lens = tf.placeholder(tf.int32, [None], name="seq_lens")
+        self.training_flag = tf.placeholder(tf.bool)
 
         inputs = tf.unstack(self.inputs, self.max_steps, 1)
 
@@ -90,14 +98,15 @@ class multiTaskModel(object):
         test_x, test_seq_lens, test_y = data.testing()
 
         epoch = 0
-
+        time_init = time.time()
+        time_start = time.time()
         train_size = int(data.num_samples * data.train_ratio)
 
         while epoch < self.max_epochs:
             num_batches = int(math.ceil(train_size / self.batch_size))
             step = 0
             train_loss_average = 0.0
-            train_loss_step = 0.0
+            time_step_start = time.time()
 
             while step < num_batches:
                 batch_x, batch_y, batch_seq_lens = data.next_batch()
@@ -114,18 +123,25 @@ class multiTaskModel(object):
 
                 step += 1
                 train_loss_average += train_loss
-                train_loss_step += train_loss
 
                 if step % self.display_step == 0:
                     val_loss, val_pred, val_acc = self._calculate_loss(val_x, val_y, val_seq_lens)
+
+                    logger.info("validation loss: {:.8f}, best validation loss: {:.8f}".format(val_loss, best_val_loss))
+                    logger.info(
+                        "validation accuracy: {:.4f}, best validation accuracy: {:.4f}".format(val_acc, best_val_acc))
+                    logger.info("It takes {:.4} seconds to run this step\n".format(time.time() - time_step_start))
 
                     if best_val_acc < val_acc:
                         best_val_acc = val_acc
                         best_val_loss = val_loss
 
-                    train_loss_step = 0.0
-
             val_loss, val_pred, val_acc = self._calculate_loss(val_x, val_y, val_seq_lens)
+            logger.info("epoch: {}, minibatch training loss: {:.8f}".format(epoch, train_loss_average / step))
+            logger.info("validation loss: {:.8f}, best validation loss: {:.8f}".format(val_loss, best_val_loss))
+            logger.info("validation accuracy: {:.4f}, best validation accuracy: {:.4f}".format(val_acc, best_val_acc))
+            logger.info("It takes {:.4f} seconds to run this step".format(time.time() - time_start))
+            time_start = time.time()
 
             if best_val_acc < val_acc:
                 best_val_acc = val_acc
@@ -133,9 +149,12 @@ class multiTaskModel(object):
 
             epoch += 1
 
+        logger.info("Optimization finished, best validation loss: {:.8f}, best validation accuracy: {:.4f}".format(
+            best_val_loss, best_val_acc))
 
         test_loss, test_pred, test_acc = self._calculate_loss(test_x, test_y, test_seq_lens)
-
+        logger.info("test loss: {:8f}, test accuracy: {:.4f}".format(test_loss, test_acc))
+        logger.info("It takes {:.4f} seconds to run this step".format(time.time() - time_init))
 
         return np.argmax(test_pred, 1), np.argmax(test_y, 1), test_loss, test_acc
 
