@@ -1,7 +1,7 @@
 import math
 import tensorflow as tf
 import  numpy as np
-from sklearn.metrics import log_loss, roc_auc_score
+from sklearn.metrics import log_loss, accuracy_score
 import logging
 import time
 
@@ -94,8 +94,8 @@ class multiTaskModel(object):
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
-        val_x, val_seq_lens, val_y = data.validation()
-        test_x, test_seq_lens, test_y = data.testing()
+        val_x, val_y, val_seq_lens = data.validation()
+        test_x, test_y, test_seq_lens = data.testing()
 
         epoch = 0
         time_init = time.time()
@@ -182,7 +182,7 @@ class multiTaskModel(object):
 
         loss = log_loss(data_y, predict_y)
 
-        auc_score = roc_auc_score(np.argmax(data_y, 1), np.argmax(predict_y, 1))
+        auc_score = accuracy_score(np.argmax(data_y, 1), np.argmax(predict_y, 1))
 
         return loss, predict_y, auc_score
 

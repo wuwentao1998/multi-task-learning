@@ -80,9 +80,7 @@ class mergeData(object):
         max_time_rank = self.data["time_rank"].max()
 
         temp = 0
-        # debug
-        #for stock_code_i in stock_code_list:
-        for stock_code_i in stock_code_list[:15]:
+        for stock_code_i in stock_code_list:
             for rank_num in range(min_time_rank + 1, max_time_rank + 1):
                 if self.data[(self.data["stock_code"] == stock_code_i) & (self.data["time_rank"] == rank_num)].shape[0] == 0:
                     continue
@@ -133,13 +131,7 @@ class mergeData(object):
 
         if os.path.exists(pre_compute_path):
             pre_compute_data = np.load(pre_compute_path)[()]
-            #self.num_samples = len(pre_compute_data["y"])
-
-            #debug
-            i = 0
-            while pre_compute_data["seq_len"][i] != 0 :
-                i = i +1
-            self.num_samples = i
+            self.num_samples = len(pre_compute_data["y"])
         else:
             pre_compute_data = self._pre_compute()
             np.save(pre_compute_path, pre_compute_data)

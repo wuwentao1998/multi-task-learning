@@ -4,10 +4,9 @@ from data import mergeData
 from model import multiTaskModel
 import logging
 import datetime
-from sklearn.metrics import classification_report, roc_auc_score, accuracy_score, confusion_matrix
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 import os
 import time
-import pandas as pd
 
 # configure the logger
 logging.basicConfig(level=logging.INFO)
@@ -71,22 +70,23 @@ def tuning_parameters(
         # evaluation metrics
         acc = accuracy_score(test_y, test_pred)
         logger.info("Accuracy: {}".format(acc))
-        auc = roc_auc_score(test_y, test_pred)
-        logger.info("AUC: {}".format(auc))
         logger.info("Classification report: ")
         logger.info(classification_report(test_y, test_pred))
         logger.info("Confusion matrix: ")
         logger.info(confusion_matrix(test_y, test_pred))
 
         # specify results path
-        result_path = "results/results_notes.csv"
+        result_path = "/results/results_notes.csv"
+
+        if not os.path.exists("/results"):
+            os.mkdir("/results")
 
         if not os.path.exists(result_path):
             with open(result_path, 'a') as file:
                 file.write("input_dimenion,dense_units,max_num_steps,"
                            "learning_rate,num_classes,max_epochs,"
                            "batch_size,lstm_units,dropout_ratio,pos_weight,"
-                           "accuracy,auc,date")
+                           "accuracy,date")
                 file.write("\n")
 
         # save results
@@ -94,16 +94,8 @@ def tuning_parameters(
             file.write(",".join([str(i) for i in [input_dimenion, dense_units,max_steps,
                                                   learning_rate, num_classes, max_epochs,
                                                   batch_size, lstm_units, dropout_ratio, pos_weight,
-                                                  acc, auc, today]]))
+                                                  acc, today]]))
             file.write("\n")
-
-        # save predict model results
-        auc_dir = "results/auc/"
-        if not os.path.exists(auc_dir):
-            os.makedirs(auc_dir)
-        auc_file = os.path.join(auc_dir, "auc_" + str(model_timestamp) + ".pkl")
-        auc_data = pd.DataFrame({"y_true": test_y, "y_pred": test_pred})
-        auc_data.to_pickle(auc_file)
 
 
 if __name__ == "__main__":
@@ -140,3 +132,5 @@ if __name__ == "__main__":
         lstm_num_layers=args.lstm_num_layers,
         pos_weight=args.pos_weight
     )
+
+    logger.info("Finished.")
